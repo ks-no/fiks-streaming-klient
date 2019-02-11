@@ -1,4 +1,6 @@
 # Streaming for multipart requests
+Bruker Fiks-Maskinporten for autorisering og Jetty HttpClient for sending av multipart requests.
+
 Eksempel på bruk av fiks-streaming-klient ved opplasting av json-data og en fil med tilhørende metadata:
 ```
 package no.ks.fiks.streaming.klient;
