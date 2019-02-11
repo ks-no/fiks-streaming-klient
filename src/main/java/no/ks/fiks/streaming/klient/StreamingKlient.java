@@ -1,0 +1,85 @@
+package no.ks.fiks.streaming.klient;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import no.ks.fiks.streaming.klient.authentication.AuthenticationStrategy;
+import org.apache.commons.io.IOUtils;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.api.Response;
+import org.eclipse.jetty.client.util.InputStreamResponseListener;
+import org.eclipse.jetty.client.util.MultiPartContentProvider;
+import org.eclipse.jetty.http.HttpField;
+import org.eclipse.jetty.http.HttpMethod;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+
+public class StreamingKlient {
+
+    private final HttpClient client = new HttpClient();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final AuthenticationStrategy authenticationStrategy;
+    private Long listenerTimeout;
+    private TimeUnit listenerTimeUnit;
+
+    public StreamingKlient(AuthenticationStrategy authenticationStrategy) {
+        this(authenticationStrategy, 30L, TimeUnit.SECONDS);
+    }
+
+    public StreamingKlient(AuthenticationStrategy authenticationStrategy, Long listenerTimeout, TimeUnit listenerTimeUnit) {
+        this.authenticationStrategy = authenticationStrategy;
+        this.listenerTimeout = listenerTimeout;
+        this.listenerTimeUnit = listenerTimeUnit;
+        try {
+            this.client.start();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public <T> KlientResponse<T> sendRequest(MultiPartContentProvider contentProvider, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers, TypeReference returnType) {
+        InputStreamResponseListener listener = new InputStreamResponseListener();
+
+        Request request = client.newRequest(baseUrl);
+        authenticationStrategy.setAuthenticationHeaders(request);
+
+        if (headers != null) {
+            headers.forEach(header -> request.header(header.getHeaderName(), header.getHeaderValue()));
+        }
+        request
+            .method(httpMethod)
+            .path(path)
+            .content(contentProvider)
+            .send(listener);
+
+        try {
+            Response response = listener.get(listenerTimeout, listenerTimeUnit);
+            int status = response.getStatus();
+            if (isError(status)) {
+                String content = IOUtils.toString(listener.getInputStream(), StandardCharsets.UTF_8);
+                throw new KlientHttpException(String.format("HTTP-feil (%d): %s", status, content), status, content);
+            }
+            return buildResponse(response, returnType != null ? objectMapper.readValue(listener.getInputStream(), returnType) : null);
+        } catch (InterruptedException | TimeoutException | ExecutionException | IOException e) {
+            throw new RuntimeException("Feil under invokering av api", e);
+        }
+    }
+
+    private <T> KlientResponse<T> buildResponse(Response response, T result) {
+        return KlientResponse.<T>builder()
+            .result(result)
+            .httpStatus(response.getStatus())
+            .httpHeaders(response.getHeaders().stream().collect(Collectors.toMap(HttpField::getName, HttpField::getValue)))
+            .build();
+    }
+
+    private boolean isError(int httpStatus) {
+        return httpStatus >= 400 && httpStatus <= 599;
+    }
+}
