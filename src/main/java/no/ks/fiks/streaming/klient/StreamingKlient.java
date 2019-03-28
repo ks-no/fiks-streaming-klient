@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import no.ks.fiks.streaming.klient.authentication.AuthenticationStrategy;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.util.InputStreamResponseListener;
@@ -29,7 +30,7 @@ public class StreamingKlient {
     private TimeUnit listenerTimeUnit;
 
     public StreamingKlient(AuthenticationStrategy authenticationStrategy) {
-        this(authenticationStrategy, 30L, TimeUnit.SECONDS);
+        this(authenticationStrategy, 5L, TimeUnit.MINUTES);
     }
 
     public StreamingKlient(AuthenticationStrategy authenticationStrategy, Long listenerTimeout, TimeUnit listenerTimeUnit) {
@@ -67,6 +68,32 @@ public class StreamingKlient {
             }
             return buildResponse(response, returnType != null ? objectMapper.readValue(listener.getInputStream(), returnType) : null);
         } catch (InterruptedException | TimeoutException | ExecutionException | IOException e) {
+            throw new RuntimeException("Feil under invokering av api", e);
+        }
+    }
+
+    public KlientResponse<byte[]> sendGetRawContentRequest(HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers) {
+        Request request = client.newRequest(baseUrl);
+        authenticationStrategy.setAuthenticationHeaders(request);
+
+        if (headers != null) {
+            headers.forEach(header -> request.header(header.getHeaderName(), header.getHeaderValue()));
+        }
+
+        try {
+            ContentResponse response = request
+                .method(httpMethod)
+                .path(path)
+                .send();
+
+            int status = response.getStatus();
+            if (isError(status)) {
+                String content = response.getContentAsString();
+                throw new KlientHttpException(String.format("HTTP-feil (%d): %s", status, content), status, content);
+            }
+
+            return buildResponse(response, response.getContent());
+        } catch (InterruptedException | TimeoutException | ExecutionException e) {
             throw new RuntimeException("Feil under invokering av api", e);
         }
     }
