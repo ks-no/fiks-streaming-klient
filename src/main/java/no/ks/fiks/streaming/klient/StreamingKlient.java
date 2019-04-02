@@ -12,6 +12,7 @@ import org.eclipse.jetty.client.util.InputStreamResponseListener;
 import org.eclipse.jetty.client.util.MultiPartContentProvider;
 import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.http.HttpStatus;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -107,6 +108,6 @@ public class StreamingKlient {
     }
 
     private boolean isError(int httpStatus) {
-        return httpStatus >= 400 && httpStatus <= 599;
+        return !HttpStatus.isSuccess(httpStatus);
     }
 }
