@@ -18,16 +18,7 @@
     <developerConnection>scm:git:git@github.com:ks-no/fiks-streaming-klient.git</developerConnection>
     <url>https://github.com/ks-no/fiks-streaming-klient</url>
   </scm>
-  <distributionManagement>
-    <repository>
-      <id>oss.sonatype.org</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-    <snapshotRepository>
-      <id>oss.sonatype.org</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-    </snapshotRepository>
-  </distributionManagement>
+
   <properties>
     <commons-io.version>2.6</commons-io.version>
     <java.version>1.8</java.version>
