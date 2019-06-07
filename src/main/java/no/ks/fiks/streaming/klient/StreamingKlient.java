@@ -16,7 +16,9 @@ import org.eclipse.jetty.http.HttpStatus;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -103,8 +105,9 @@ public class StreamingKlient {
         return KlientResponse.<T>builder()
             .result(result)
             .httpStatus(response.getStatus())
-            .httpHeaders(response.getHeaders().stream().collect(Collectors.toMap(HttpField::getName, HttpField::getValue)))
+            .httpHeaders(response.getHeaders().stream().collect(Collectors.toMap(HttpField::getName, HttpField::getValue, (prev, next) -> next, HashMap::new)))
             .build();
+
     }
 
     private boolean isError(int httpStatus) {
