@@ -15,10 +15,10 @@ import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -48,19 +48,7 @@ public class StreamingKlient {
     }
 
     public <T> KlientResponse<T> sendRequest(MultiPartContentProvider contentProvider, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers, TypeReference returnType) {
-        InputStreamResponseListener listener = new InputStreamResponseListener();
-
-        Request request = client.newRequest(baseUrl);
-        authenticationStrategy.setAuthenticationHeaders(request);
-
-        if (headers != null) {
-            headers.forEach(header -> request.header(header.getHeaderName(), header.getHeaderValue()));
-        }
-        request
-            .method(httpMethod)
-            .path(path)
-            .content(contentProvider)
-            .send(listener);
+        InputStreamResponseListener listener = sendRequestReturnResponseListener(contentProvider, httpMethod, baseUrl, path, headers);
 
         try {
             Response response = listener.get(listenerTimeout, listenerTimeUnit);
@@ -70,6 +58,22 @@ public class StreamingKlient {
                 throw new KlientHttpException(String.format("HTTP-feil (%d): %s", status, content), status, content);
             }
             return buildResponse(response, returnType != null ? objectMapper.readValue(listener.getInputStream(), returnType) : null);
+        } catch (InterruptedException | TimeoutException | ExecutionException | IOException e) {
+            throw new RuntimeException("Feil under invokering av api", e);
+        }
+    }
+
+    public KlientResponse<InputStream> sendDownloadRequest(MultiPartContentProvider contentProvider, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers) {
+        InputStreamResponseListener listener = sendRequestReturnResponseListener(contentProvider, httpMethod, baseUrl, path, headers);
+
+        try {
+            Response response = listener.get(listenerTimeout, listenerTimeUnit);
+            int status = response.getStatus();
+            if (isError(status)) {
+                String content = IOUtils.toString(listener.getInputStream(), StandardCharsets.UTF_8);
+                throw new KlientHttpException(String.format("HTTP-feil (%d): %s", status, content), status, content);
+            }
+            return buildResponse(response, listener.getInputStream());
         } catch (InterruptedException | TimeoutException | ExecutionException | IOException e) {
             throw new RuntimeException("Feil under invokering av api", e);
         }
@@ -85,9 +89,9 @@ public class StreamingKlient {
 
         try {
             ContentResponse response = request
-                .method(httpMethod)
-                .path(path)
-                .send();
+                    .method(httpMethod)
+                    .path(path)
+                    .send();
 
             int status = response.getStatus();
             if (isError(status)) {
@@ -101,12 +105,29 @@ public class StreamingKlient {
         }
     }
 
+    private InputStreamResponseListener sendRequestReturnResponseListener(MultiPartContentProvider contentProvider, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers) {
+        InputStreamResponseListener listener = new InputStreamResponseListener();
+
+        Request request = client.newRequest(baseUrl);
+        authenticationStrategy.setAuthenticationHeaders(request);
+
+        if (headers != null) {
+            headers.forEach(header -> request.header(header.getHeaderName(), header.getHeaderValue()));
+        }
+        request
+                .method(httpMethod)
+                .path(path)
+                .content(contentProvider)
+                .send(listener);
+        return listener;
+    }
+
     private <T> KlientResponse<T> buildResponse(Response response, T result) {
         return KlientResponse.<T>builder()
-            .result(result)
-            .httpStatus(response.getStatus())
-            .httpHeaders(response.getHeaders().stream().collect(Collectors.toMap(HttpField::getName, HttpField::getValue, (prev, next) -> next, HashMap::new)))
-            .build();
+                .result(result)
+                .httpStatus(response.getStatus())
+                .httpHeaders(response.getHeaders().stream().collect(Collectors.toMap(HttpField::getName, HttpField::getValue, (prev, next) -> next, HashMap::new)))
+                .build();
 
     }
 
