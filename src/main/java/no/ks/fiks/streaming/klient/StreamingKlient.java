@@ -13,6 +13,7 @@ import org.eclipse.jetty.client.util.MultiPartContentProvider;
 import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +27,7 @@ import java.util.stream.Collectors;
 
 public class StreamingKlient {
 
-    private final HttpClient client = new HttpClient();
+    private final HttpClient client = new HttpClient(new SslContextFactory.Client());
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final AuthenticationStrategy authenticationStrategy;
     private Long listenerTimeout;
