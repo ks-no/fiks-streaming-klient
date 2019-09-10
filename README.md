@@ -1,4 +1,7 @@
 # Streaming for multipart requests
+![Maven Central](https://img.shields.io/maven-central/v/no.ks.fiks/streaming-klient)
+![GitHub](https://img.shields.io/github/license/ks-no/fiks-streaming-klient)
+
 Bruker Fiks-Maskinporten for autorisering og Jetty HttpClient for sending av multipart requests.
 
 Eksempel på bruk av fiks-streaming-klient ved opplasting av json-data og en fil med tilhørende metadata:
