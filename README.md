@@ -2,6 +2,8 @@
 ![Maven Central](https://img.shields.io/maven-central/v/no.ks.fiks/streaming-klient)
 ![GitHub](https://img.shields.io/github/license/ks-no/fiks-streaming-klient)
 ![GitHub issues](https://img.shields.io/github/issues/ks-no/fiks-streaming-klient)
+![GitHub Release Date](https://img.shields.io/github/release-date/ks-no/fiks-streaming-klient)
+![Latest GitHub release](https://img.shields.io/github/v/release/ks-no/fiks-streaming-klient)
 
 Bruker Fiks-Maskinporten for autorisering og Jetty HttpClient for sending av multipart requests.
 
