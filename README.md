@@ -1,7 +1,7 @@
 # Streaming for multipart requests
-![Maven Central](https://img.shields.io/maven-central/v/no.ks.fiks/streaming-klient)
-![GitHub](https://img.shields.io/github/license/ks-no/fiks-streaming-klient)
-![GitHub issues](https://img.shields.io/github/issues/ks-no/fiks-streaming-klient)
+[![Maven Central](https://img.shields.io/maven-central/v/no.ks.fiks/streaming-klient)](https://search.maven.org/search?q=g:no.ks.fiks%20a:streaming-klient)
+[![GitHub](https://img.shields.io/github/license/ks-no/fiks-streaming-klient)](https://raw.githubusercontent.com/ks-no/fiks-streaming-klient/master/LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/ks-no/fiks-streaming-klient)](https://github.com/ks-no/fiks-streaming-klient/issues)
 ![GitHub Release Date](https://img.shields.io/github/release-date/ks-no/fiks-streaming-klient)
 ![Latest GitHub release](https://img.shields.io/github/v/release/ks-no/fiks-streaming-klient)
 
