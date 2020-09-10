@@ -20,7 +20,7 @@
   </scm>
   <properties>
     <lombok.version>1.18.12</lombok.version>
-    <commons-io.version>2.6</commons-io.version>
+    <commons-io.version>2.8.0</commons-io.version>
     <java.version>1.8</java.version>
     <changelist>-SNAPSHOT</changelist>
     <maven.compiler.target>${java.version}</maven.compiler.target>
