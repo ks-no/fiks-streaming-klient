@@ -52,7 +52,7 @@ public class StreamingKlient {
         InputStreamResponseListener listener = sendRequestReturnResponseListener(contentProvider, httpMethod, baseUrl, path, headers);
 
         try {
-            Response response = listener.get(listenerTimeout, listenerTimeUnit);
+            final Response response = awaitResponse(listener);
             int status = response.getStatus();
             if (isError(status)) {
                 String content = IOUtils.toString(listener.getInputStream(), StandardCharsets.UTF_8);
@@ -61,8 +61,8 @@ public class StreamingKlient {
             try(final InputStream input = listener.getInputStream()) {
                 return buildResponse(response, returnType != null ? objectMapper.readValue(input, returnType) : null);
             }
-        } catch (InterruptedException | TimeoutException | ExecutionException | IOException e) {
-            throw new RuntimeException("Feil under invokering av api", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Feil under lesing av datastrøm", e);
         }
     }
 
@@ -70,7 +70,7 @@ public class StreamingKlient {
         InputStreamResponseListener listener = sendRequestReturnResponseListener(contentProvider, httpMethod, baseUrl, path, headers);
 
         try {
-            Response response = listener.get(listenerTimeout, listenerTimeUnit);
+            Response response = awaitResponse(listener);
             int status = response.getStatus();
             if (isError(status)) {
                 String content = IOUtils.toString(listener.getInputStream(), StandardCharsets.UTF_8);
@@ -79,7 +79,15 @@ public class StreamingKlient {
             try(final InputStream input = listener.getInputStream()) {
                 return buildResponse(response, input);
             }
-        } catch (InterruptedException | TimeoutException | ExecutionException | IOException e) {
+        } catch (IOException e) {
+            throw new RuntimeException("Feil under lesing av datastrøm", e);
+        }
+    }
+
+    private Response awaitResponse(InputStreamResponseListener listener)  {
+        try {
+            return listener.get(listenerTimeout, listenerTimeUnit);
+        } catch (InterruptedException | TimeoutException | ExecutionException e) {
             throw new RuntimeException("Feil under invokering av api", e);
         }
     }
