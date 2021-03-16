@@ -48,7 +48,7 @@ public class StreamingKlient {
         }
     }
 
-    public <T> KlientResponse<T> sendRequest(MultiPartContentProvider contentProvider, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers, TypeReference returnType) {
+    public <T> KlientResponse<T> sendRequest(MultiPartContentProvider contentProvider, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers, TypeReference<T> returnType) {
         InputStreamResponseListener listener = sendRequestReturnResponseListener(contentProvider, httpMethod, baseUrl, path, headers);
 
         try {
@@ -58,7 +58,9 @@ public class StreamingKlient {
                 String content = IOUtils.toString(listener.getInputStream(), StandardCharsets.UTF_8);
                 throw new KlientHttpException(String.format("HTTP-feil (%d): %s", status, content), status, content);
             }
-            return buildResponse(response, returnType != null ? objectMapper.readValue(listener.getInputStream(), returnType) : null);
+            try(final InputStream input = listener.getInputStream()) {
+                return buildResponse(response, returnType != null ? objectMapper.readValue(input, returnType) : null);
+            }
         } catch (InterruptedException | TimeoutException | ExecutionException | IOException e) {
             throw new RuntimeException("Feil under invokering av api", e);
         }
@@ -74,7 +76,9 @@ public class StreamingKlient {
                 String content = IOUtils.toString(listener.getInputStream(), StandardCharsets.UTF_8);
                 throw new KlientHttpException(String.format("HTTP-feil (%d): %s", status, content), status, content);
             }
-            return buildResponse(response, listener.getInputStream());
+            try(final InputStream input = listener.getInputStream()) {
+                return buildResponse(response, input);
+            }
         } catch (InterruptedException | TimeoutException | ExecutionException | IOException e) {
             throw new RuntimeException("Feil under invokering av api", e);
         }
