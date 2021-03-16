@@ -76,9 +76,7 @@ public class StreamingKlient {
                 String content = IOUtils.toString(listener.getInputStream(), StandardCharsets.UTF_8);
                 throw new KlientHttpException(String.format("HTTP-feil (%d): %s", status, content), status, content);
             }
-            try(final InputStream input = listener.getInputStream()) {
-                return buildResponse(response, input);
-            }
+            return buildResponse(response, listener.getInputStream());
         } catch (IOException e) {
             throw new RuntimeException("Feil under lesing av datastrøm", e);
         }
