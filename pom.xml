@@ -7,30 +7,34 @@
     <artifactId>fiks-ekstern-super-pom</artifactId>
     <version>1.0.7</version>
   </parent>
+
   <groupId>no.ks.fiks</groupId>
   <artifactId>streaming-klient</artifactId>
-  <version>${revision}${changelist}</version>
+  <version>1.0.16-SNAPSHOT</version>
+
   <name>Streaming for multipart requests</name>
   <description>streaming for multipart requests</description>
   <url>https://github.com/ks-no/fiks-streaming-klient</url>
+
   <scm>
     <connection>scm:git:git@github.com:ks-no/fiks-streaming-klient.git</connection>
     <developerConnection>scm:git:git@github.com:ks-no/fiks-streaming-klient.git</developerConnection>
     <url>https://github.com/ks-no/fiks-streaming-klient</url>
   </scm>
+
   <properties>
-    <lombok.version>1.18.22</lombok.version>
-    <maven.compiler.target>${java.version}</maven.compiler.target>
     <java.version>1.8</java.version>
-    <jetty-client.version>9.4.44.v20210927</jetty-client.version>
-    <changelist>-SNAPSHOT</changelist>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <lombok.version>1.18.22</lombok.version>
+    <jetty-client.version>9.4.44.v20210927</jetty-client.version>
     <jackson.version>2.13.1</jackson.version>
     <fiks-maskinporten-client.version>2.0.5</fiks-maskinporten-client.version>
     <commons-io.version>2.11.0</commons-io.version>
-    <revision>1.0.16</revision>
   </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -42,6 +46,7 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -68,6 +73,7 @@
       <version>${commons-io.version}</version>
     </dependency>
   </dependencies>
+
   <build>
     <plugins>
       <plugin>
