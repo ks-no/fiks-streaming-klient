@@ -10,7 +10,7 @@
 
   <groupId>no.ks.fiks</groupId>
   <artifactId>streaming-klient</artifactId>
-  <version>1.1.0</version>
+  <version>1.1.1-SNAPSHOT</version>
 
   <name>Streaming for multipart requests</name>
   <description>streaming for multipart requests</description>
