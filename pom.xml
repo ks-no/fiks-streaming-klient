@@ -29,7 +29,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <lombok.version>1.18.24</lombok.version>
-    <jetty-client.version>9.4.48.v20220622</jetty-client.version>
+    <jetty-client.version>9.4.49.v20220914</jetty-client.version>
     <jackson.version>2.13.4</jackson.version>
     <fiks-maskinporten-client.version>2.1.2</fiks-maskinporten-client.version>
     <commons-io.version>2.11.0</commons-io.version>
