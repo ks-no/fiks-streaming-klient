@@ -5,7 +5,7 @@
   <parent>
     <groupId>no.ks.fiks.pom</groupId>
     <artifactId>fiks-ekstern-super-pom</artifactId>
-    <version>1.0.18</version>
+    <version>1.1.1</version>
   </parent>
 
   <groupId>no.ks.fiks</groupId>
@@ -23,15 +23,14 @@
   </scm>
 
   <properties>
-    <java.version>11</java.version>
+    <java.version>17</java.version>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <lombok.version>1.18.24</lombok.version>
-    <jetty-client.version>9.4.49.v20220914</jetty-client.version>
-    <jackson.version>2.13.4</jackson.version>
-    <fiks-maskinporten-client.version>2.1.2</fiks-maskinporten-client.version>
+    <jetty-client.version>11.0.15</jetty-client.version>
+    <jackson.version>2.15.2</jackson.version>
+    <fiks-maskinporten-client.version>3.1.2</fiks-maskinporten-client.version>
     <commons-io.version>2.11.0</commons-io.version>
   </properties>
 
@@ -48,11 +47,6 @@
   </dependencyManagement>
 
   <dependencies>
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <version>${lombok.version}</version>
-    </dependency>
     <dependency>
       <groupId>no.ks.fiks</groupId>
       <artifactId>maskinporten-client</artifactId>
