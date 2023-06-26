@@ -8,11 +8,13 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
+import org.eclipse.jetty.client.dynamic.HttpClientTransportDynamic;
 import org.eclipse.jetty.client.util.InputStreamResponseListener;
-import org.eclipse.jetty.client.util.MultiPartContentProvider;
+import org.eclipse.jetty.client.util.MultiPartRequestContent;
 import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.io.ClientConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import java.io.IOException;
@@ -27,11 +29,11 @@ import java.util.stream.Collectors;
 
 public class StreamingKlient {
 
-    private final HttpClient client = new HttpClient(new SslContextFactory.Client());
+    private final HttpClient client = buildClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final AuthenticationStrategy authenticationStrategy;
-    private Long listenerTimeout;
-    private TimeUnit listenerTimeUnit;
+    private final Long listenerTimeout;
+    private final TimeUnit listenerTimeUnit;
 
     public StreamingKlient(AuthenticationStrategy authenticationStrategy) {
         this(authenticationStrategy, 5L, TimeUnit.MINUTES);
@@ -48,17 +50,23 @@ public class StreamingKlient {
         }
     }
 
-    public <T> KlientResponse<T> sendRequest(MultiPartContentProvider contentProvider, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers, TypeReference<T> returnType) {
-        InputStreamResponseListener listener = sendRequestReturnResponseListener(contentProvider, httpMethod, baseUrl, path, headers);
+    private HttpClient buildClient() {
+        ClientConnector clientConnector = new ClientConnector();
+        clientConnector.setSslContextFactory(new SslContextFactory.Client());
+        return new HttpClient(new HttpClientTransportDynamic(clientConnector));
+    }
+
+    public <T> KlientResponse<T> sendRequest(MultiPartRequestContent content, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers, TypeReference<T> returnType) {
+        InputStreamResponseListener listener = sendRequestReturnResponseListener(content, httpMethod, baseUrl, path, headers);
 
         try {
             final Response response = awaitResponse(listener);
             int status = response.getStatus();
             if (isError(status)) {
-                String content = IOUtils.toString(listener.getInputStream(), StandardCharsets.UTF_8);
-                throw new KlientHttpException(String.format("HTTP-feil (%d): %s", status, content), status, content);
+                String errorContent = IOUtils.toString(listener.getInputStream(), StandardCharsets.UTF_8);
+                throw new KlientHttpException(String.format("HTTP-feil (%d): %s", status, errorContent), status, errorContent);
             }
-            try(final InputStream input = listener.getInputStream()) {
+            try (final InputStream input = listener.getInputStream()) {
                 return buildResponse(response, returnType != null ? objectMapper.readValue(input, returnType) : null);
             }
         } catch (IOException e) {
@@ -66,15 +74,15 @@ public class StreamingKlient {
         }
     }
 
-    public KlientResponse<InputStream> sendDownloadRequest(MultiPartContentProvider contentProvider, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers) {
-        InputStreamResponseListener listener = sendRequestReturnResponseListener(contentProvider, httpMethod, baseUrl, path, headers);
+    public KlientResponse<InputStream> sendDownloadRequest(MultiPartRequestContent content, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers) {
+        InputStreamResponseListener listener = sendRequestReturnResponseListener(content, httpMethod, baseUrl, path, headers);
 
         try {
             Response response = awaitResponse(listener);
             int status = response.getStatus();
             if (isError(status)) {
-                String content = IOUtils.toString(listener.getInputStream(), StandardCharsets.UTF_8);
-                throw new KlientHttpException(String.format("HTTP-feil (%d): %s", status, content), status, content);
+                String errorContent = IOUtils.toString(listener.getInputStream(), StandardCharsets.UTF_8);
+                throw new KlientHttpException(String.format("HTTP-feil (%d): %s", status, errorContent), status, errorContent);
             }
             return buildResponse(response, listener.getInputStream());
         } catch (IOException e) {
@@ -82,7 +90,7 @@ public class StreamingKlient {
         }
     }
 
-    private Response awaitResponse(InputStreamResponseListener listener)  {
+    private Response awaitResponse(InputStreamResponseListener listener) {
         try {
             return listener.get(listenerTimeout, listenerTimeUnit);
         } catch (InterruptedException | TimeoutException | ExecutionException e) {
@@ -95,7 +103,7 @@ public class StreamingKlient {
         authenticationStrategy.setAuthenticationHeaders(request);
 
         if (headers != null) {
-            headers.forEach(header -> request.header(header.getHeaderName(), header.getHeaderValue()));
+            request.headers(requestHeaders -> headers.forEach(header -> requestHeaders.put(header.name(), header.value())));
         }
 
         try {
@@ -116,30 +124,29 @@ public class StreamingKlient {
         }
     }
 
-    private InputStreamResponseListener sendRequestReturnResponseListener(MultiPartContentProvider contentProvider, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers) {
+    private InputStreamResponseListener sendRequestReturnResponseListener(MultiPartRequestContent content, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers) {
         InputStreamResponseListener listener = new InputStreamResponseListener();
 
         Request request = client.newRequest(baseUrl);
         authenticationStrategy.setAuthenticationHeaders(request);
 
         if (headers != null) {
-            headers.forEach(header -> request.header(header.getHeaderName(), header.getHeaderValue()));
+            request.headers(requestHeaders -> headers.forEach(header -> requestHeaders.put(header.name(), header.value())));
         }
         request
                 .method(httpMethod)
                 .path(path)
-                .content(contentProvider)
+                .body(content)
                 .send(listener);
         return listener;
     }
 
     private <T> KlientResponse<T> buildResponse(Response response, T result) {
-        return KlientResponse.<T>builder()
-                .result(result)
-                .httpStatus(response.getStatus())
-                .httpHeaders(response.getHeaders().stream().collect(Collectors.toMap(HttpField::getName, HttpField::getValue, (prev, next) -> next, HashMap::new)))
-                .build();
-
+        return new KlientResponse<>(
+                result,
+                response.getStatus(),
+                response.getHeaders().stream().collect(Collectors.toMap(HttpField::getName, HttpField::getValue, (prev, next) -> next, HashMap::new))
+        );
     }
 
     private boolean isError(int httpStatus) {

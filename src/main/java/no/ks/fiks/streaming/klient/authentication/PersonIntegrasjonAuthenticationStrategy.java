@@ -9,7 +9,7 @@ public class PersonIntegrasjonAuthenticationStrategy implements AuthenticationSt
 
     private final UUID integrasjonId;
     private final String integrasjonPassord;
-    private String personToken;
+    private final String personToken;
 
     public PersonIntegrasjonAuthenticationStrategy(String personToken, UUID integrasjonId, String integrasjonPassord) {
         this.personToken = personToken;
@@ -18,8 +18,11 @@ public class PersonIntegrasjonAuthenticationStrategy implements AuthenticationSt
     }
 
     public void setAuthenticationHeaders(Request request) {
-        request.header(HttpHeader.AUTHORIZATION, "Bearer " + personToken)
-                .header("IntegrasjonId", integrasjonId.toString())
-                .header("IntegrasjonPassord", integrasjonPassord);
+        request.headers(headers -> {
+                    headers.put(HttpHeader.AUTHORIZATION, "Bearer " + personToken);
+                    headers.put("IntegrasjonId", integrasjonId.toString());
+                    headers.put("IntegrasjonPassord", integrasjonPassord);
+                }
+        );
     }
 }

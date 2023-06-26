@@ -2,75 +2,71 @@ package no.ks.fiks.streaming.klient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.NonNull;
-import org.eclipse.jetty.client.util.InputStreamContentProvider;
-import org.eclipse.jetty.client.util.MultiPartContentProvider;
-import org.eclipse.jetty.client.util.StringContentProvider;
+import org.eclipse.jetty.client.util.*;
 
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Objects;
 
 public class MultipartContentProviderBuilder {
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
-  private final MultiPartContentProvider contentProvider;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final MultiPartRequestContent content;
 
-  public MultipartContentProviderBuilder() {
-    contentProvider = new MultiPartContentProvider();
-  }
-
-  public void addFieldPart(Object metadata, String name, String contentType, Charset charset) {
-    contentProvider.addFieldPart(name, new StringContentProvider(contentType, toString(metadata), charset), null);
-  }
-
-  public void addFieldPart(Object metadata, String name) {
-    contentProvider.addFieldPart(name, new StringContentProvider(toString(metadata)), null);
-  }
-
-  public void addFileData(List<FilForOpplasting<Object>> filer) {
-
-    int fileId = 0;
-    for (FilForOpplasting dokument : filer) {
-      contentProvider.addFieldPart(String.format("metadata:%s", fileId), new StringContentProvider(toString(dokument.getMetadata())), null);
-      contentProvider.addFilePart(String.format("dokument:%s", fileId), dokument.getFilnavn(), new InputStreamContentProvider(dokument.getData()), null);
-      fileId++;
+    public MultipartContentProviderBuilder() {
+        content = new MultiPartRequestContent();
     }
-  }
 
-  public void addFileData(List<FilForOpplasting<Object>> filer, String metadataContentType, Charset charset) {
-
-    int fileId = 0;
-    for (FilForOpplasting dokument : filer) {
-      contentProvider.addFieldPart(String.format("metadata:%s", fileId), new StringContentProvider(metadataContentType, toString(dokument.getMetadata()), charset), null);
-      contentProvider.addFilePart(String.format("dokument:%s", fileId), dokument.getFilnavn(), new InputStreamContentProvider(dokument.getData()), null);
-      fileId++;
+    public void addFieldPart(Object metadata, String name, String contentType, Charset charset) {
+        content.addFieldPart(name, new StringRequestContent(contentType, toString(metadata), charset), null);
     }
-  }
 
-  public void addFileData(FilForOpplasting<Object> fil) {
-    contentProvider.addFieldPart("metadata", new StringContentProvider(toString(fil.getMetadata())), null);
-    contentProvider.addFilePart("dokument", fil.getFilnavn(), new InputStreamContentProvider(fil.getData()), null);
-  }
-
-  public void addFileData(FilForOpplasting<Object> fil, String metadataContentType, Charset charset) {
-    contentProvider.addFieldPart("metadata", new StringContentProvider(metadataContentType, toString(fil.getMetadata()), charset), null);
-    contentProvider.addFilePart("dokument", fil.getFilnavn(), new InputStreamContentProvider(fil.getData()), null);
-  }
-
-  public MultiPartContentProvider build() {
-    contentProvider.close();
-    return contentProvider;
-  }
-
-  private String toString(@NonNull Object metadata) {
-    if(metadata instanceof String) {
-      return (String) metadata;
+    public void addFieldPart(Object metadata, String name) {
+        content.addFieldPart(name, new StringRequestContent(toString(metadata)), null);
     }
-    try {
-      return objectMapper.writeValueAsString(metadata);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException("Feil under serialisering av metadata", e);
+
+    public void addFileData(List<FilForOpplasting<Object>> filer) {
+        int fileId = 0;
+        for (FilForOpplasting<?> dokument : filer) {
+            content.addFieldPart(String.format("metadata:%s", fileId), new StringRequestContent(toString(dokument.metadata())), null);
+            content.addFilePart(String.format("dokument:%s", fileId), dokument.filnavn(), new InputStreamRequestContent(dokument.data()), null);
+            fileId++;
+        }
     }
-  }
+
+    public void addFileData(List<FilForOpplasting<Object>> filer, String metadataContentType, Charset charset) {
+        int fileId = 0;
+        for (FilForOpplasting<?> dokument : filer) {
+            content.addFieldPart(String.format("metadata:%s", fileId), new StringRequestContent(metadataContentType, toString(dokument.metadata()), charset), null);
+            content.addFilePart(String.format("dokument:%s", fileId), dokument.filnavn(), new InputStreamRequestContent(dokument.data()), null);
+            fileId++;
+        }
+    }
+
+    public void addFileData(FilForOpplasting<Object> fil) {
+        content.addFieldPart("metadata", new StringRequestContent(toString(fil.metadata())), null);
+        content.addFilePart("dokument", fil.filnavn(), new InputStreamRequestContent(fil.data()), null);
+    }
+
+    public void addFileData(FilForOpplasting<Object> fil, String metadataContentType, Charset charset) {
+        content.addFieldPart("metadata", new StringRequestContent(metadataContentType, toString(fil.metadata()), charset), null);
+        content.addFilePart("dokument", fil.filnavn(), new InputStreamRequestContent(fil.data()), null);
+    }
+
+    public MultiPartRequestContent build() {
+        content.close();
+        return content;
+    }
+
+    private String toString(Object metadata) {
+        if (metadata instanceof String) {
+            return (String) metadata;
+        }
+        try {
+            return objectMapper.writeValueAsString(Objects.requireNonNull(metadata));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Feil under serialisering av metadata", e);
+        }
+    }
 
 }

@@ -1,5 +1,6 @@
 package no.ks.fiks.streaming.klient.authentication;
 
+import no.ks.fiks.maskinporten.AccessTokenRequest;
 import no.ks.fiks.maskinporten.Maskinportenklient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpHeader;
@@ -19,12 +20,15 @@ public class IntegrasjonAuthenticationStrategy implements AuthenticationStrategy
     }
 
     public void setAuthenticationHeaders(Request request) {
-        request.header(HttpHeader.AUTHORIZATION, "Bearer " + getAccessToken())
-                .header("IntegrasjonId", integrasjonId.toString())
-                .header("IntegrasjonPassord", integrasjonPassord);
+        request.headers(headers -> {
+                    headers.put(HttpHeader.AUTHORIZATION, "Bearer " + getAccessToken());
+                    headers.put("IntegrasjonId", integrasjonId.toString());
+                    headers.put("IntegrasjonPassord", integrasjonPassord);
+                }
+        );
     }
 
     private String getAccessToken() {
-        return maskinportenklient.getAccessToken("ks:fiks");
+        return maskinportenklient.getAccessToken(AccessTokenRequest.builder().scope("ks:fiks").build());
     }
 }
