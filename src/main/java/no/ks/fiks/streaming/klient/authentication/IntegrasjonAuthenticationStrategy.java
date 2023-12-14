@@ -2,7 +2,7 @@ package no.ks.fiks.streaming.klient.authentication;
 
 import no.ks.fiks.maskinporten.AccessTokenRequest;
 import no.ks.fiks.maskinporten.Maskinportenklient;
-import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.Request;
 import org.eclipse.jetty.http.HttpHeader;
 
 import java.util.UUID;

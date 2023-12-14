@@ -1,6 +1,6 @@
 package no.ks.fiks.streaming.klient.authentication;
 
-import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.Request;
 import org.eclipse.jetty.http.HttpHeader;
 
 import java.util.UUID;
