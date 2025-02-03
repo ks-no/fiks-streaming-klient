@@ -29,7 +29,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <jetty-client.version>12.0.16</jetty-client.version>
-    <jackson.version>2.16.0</jackson.version>
+    <jackson.version>2.18.2</jackson.version>
     <fiks-maskinporten-client.version>3.3.3</fiks-maskinporten-client.version>
     <commons-io.version>2.18.0</commons-io.version>
   </properties>
