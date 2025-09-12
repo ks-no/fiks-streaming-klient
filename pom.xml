@@ -31,7 +31,7 @@
     <jetty-client.version>12.1.1</jetty-client.version>
     <jackson.version>2.18.2</jackson.version>
     <fiks-maskinporten-client.version>3.5.1</fiks-maskinporten-client.version>
-    <commons-io.version>2.18.0</commons-io.version>
+    <commons-io.version>2.20.0</commons-io.version>
   </properties>
 
   <dependencyManagement>
