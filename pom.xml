@@ -29,22 +29,9 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <jetty-client.version>12.1.1</jetty-client.version>
-    <jackson.version>2.20.0</jackson.version>
     <fiks-maskinporten-client.version>3.5.1</fiks-maskinporten-client.version>
     <commons-io.version>2.18.0</commons-io.version>
   </properties>
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>com.fasterxml.jackson</groupId>
-        <artifactId>jackson-bom</artifactId>
-        <version>${jackson.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
   <dependencies>
     <dependency>
