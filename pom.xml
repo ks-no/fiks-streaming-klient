@@ -29,7 +29,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <jetty-client.version>12.1.1</jetty-client.version>
-    <fiks-maskinporten-client.version>3.5.1</fiks-maskinporten-client.version>
+    <fiks-maskinporten-client.version>3.5.3</fiks-maskinporten-client.version>
     <commons-io.version>2.20.0</commons-io.version>
   </properties>
 
