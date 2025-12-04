@@ -28,7 +28,7 @@
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <jetty-client.version>12.1.5</jetty-client.version>
+   <jetty-client.version>12.1.5</jetty-client.version>
     <fiks-maskinporten-client.version>3.5.5</fiks-maskinporten-client.version>
     <commons-io.version>2.21.0</commons-io.version>
   </properties>
