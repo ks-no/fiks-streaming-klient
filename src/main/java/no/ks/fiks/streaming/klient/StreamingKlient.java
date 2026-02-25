@@ -196,7 +196,7 @@ public class StreamingKlient {
                 .method(httpMethod)
                 .path(path);
 
-        if (jsonBody != null || !jsonBody.isEmpty()) {
+        if (jsonBody != null && !jsonBody.isEmpty()) {
             request.body(new StringRequestContent("application/json", jsonBody, StandardCharsets.UTF_8));
         }
 
