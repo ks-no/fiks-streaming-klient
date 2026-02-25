@@ -11,6 +11,7 @@ import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.io.ClientConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,6 +55,53 @@ public class StreamingKlient {
     public <T> KlientResponse<T> sendRequest(MultiPartRequestContent content, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers, TypeReference<T> returnType) {
         InputStreamResponseListener listener = sendRequestReturnResponseListener(content, httpMethod, baseUrl, path, headers);
 
+        return getInoutStreamKlientResponse(listener, returnType);
+    }
+
+    public KlientResponse<InputStream> sendDownloadRequest(MultiPartRequestContent content, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers) {
+        InputStreamResponseListener listener = sendRequestReturnResponseListener(content, httpMethod, baseUrl, path, headers);
+
+        return getInputDownloadStreamKlientResponse(listener);
+    }
+
+    public <T> KlientResponse<T> sendJsonRequest(Object body, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers, TypeReference<T> returnType) {
+        String jsonBody = serializeBodyToJson(body);
+
+        var listener = sendJsonRequestReturnResponseListener(jsonBody, httpMethod, baseUrl, path, headers);
+
+        return getInoutStreamKlientResponse(listener, returnType);
+    }
+
+    public <T> KlientResponse<T> sendPostWithoutBody(HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers, TypeReference<T> returnType) {
+        InputStreamResponseListener listener = sendJsonRequestReturnResponseListener(null, httpMethod, baseUrl, path, headers);
+
+        return getInoutStreamKlientResponse(listener, returnType);
+    }
+
+    public KlientResponse<InputStream> sendJsonDownloadRequest(Object body, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers) {
+        String jsonBody = serializeBodyToJson(body);
+        if (headers == null)
+            headers = new java.util.ArrayList<>();
+        else
+            headers = new java.util.ArrayList<>(headers);
+
+        headers.add(new HttpHeader("Accept", "*/*"));
+
+        InputStreamResponseListener listener = sendJsonRequestReturnResponseListener(jsonBody, httpMethod, baseUrl, path, headers);
+
+        return getInputDownloadStreamKlientResponse(listener);
+    }
+
+    private String serializeBodyToJson(Object body) {
+        try {
+            return objectMapper.writeValueAsString(body);
+        } catch (IOException e) {
+            throw new RuntimeException("Klarte ikke serialisere request body til JSON", e);
+        }
+    }
+
+    @NotNull
+    private <T> KlientResponse<T> getInoutStreamKlientResponse(InputStreamResponseListener listener, TypeReference<T> returnType) {
         try {
             final Response response = awaitResponse(listener);
             int status = response.getStatus();
@@ -69,9 +117,8 @@ public class StreamingKlient {
         }
     }
 
-    public KlientResponse<InputStream> sendDownloadRequest(MultiPartRequestContent content, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers) {
-        InputStreamResponseListener listener = sendRequestReturnResponseListener(content, httpMethod, baseUrl, path, headers);
-
+    @NotNull
+    private KlientResponse<InputStream> getInputDownloadStreamKlientResponse(InputStreamResponseListener listener) {
         try {
             Response response = awaitResponse(listener);
             int status = response.getStatus();
@@ -133,7 +180,31 @@ public class StreamingKlient {
                 .path(path)
                 .body(content)
                 .send(listener);
+
         return listener;
+    }
+
+    private InputStreamResponseListener sendJsonRequestReturnResponseListener(String jsonBody, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers) {
+        var listner = new InputStreamResponseListener();
+        var request = client.newRequest(baseUrl);
+
+        authenticationStrategy.setAuthenticationHeaders(request);
+
+        if (headers != null) {
+            request.headers(requestHeaders -> headers.forEach(header -> requestHeaders.put(header.name(), header.value())));
+        }
+
+        request
+                .method(httpMethod)
+                .path(path);
+
+        if (jsonBody != null && !jsonBody.isEmpty()) {
+            request.body(new StringRequestContent("application/json", jsonBody, StandardCharsets.UTF_8));
+        }
+
+        request.send(listner);
+
+        return listner;
     }
 
     private <T> KlientResponse<T> buildResponse(Response response, T result) {
