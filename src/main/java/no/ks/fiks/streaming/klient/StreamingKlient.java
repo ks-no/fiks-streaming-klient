@@ -81,7 +81,9 @@ public class StreamingKlient {
     public KlientResponse<InputStream> sendJsonDownloadRequest(Object body, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers) {
         String jsonBody = serializeBodyToJson(body);
         if (headers == null)
-            headers = List.of();
+            headers = new java.util.ArrayList<>();
+        else
+            headers = new java.util.ArrayList<>(headers);
 
         headers.add(new HttpHeader("Accept", "*/*"));
 
