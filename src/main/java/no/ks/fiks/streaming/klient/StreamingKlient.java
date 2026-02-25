@@ -54,6 +54,7 @@ public class StreamingKlient {
 
     public <T> KlientResponse<T> sendRequest(MultiPartRequestContent content, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers, TypeReference<T> returnType) {
         InputStreamResponseListener listener = sendRequestReturnResponseListener(content, httpMethod, baseUrl, path, headers);
+
         return getInoutStreamKlientResponse(listener, returnType);
     }
 
@@ -73,6 +74,7 @@ public class StreamingKlient {
 
     public <T> KlientResponse<T> sendPostWithoutBody(HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers, TypeReference<T> returnType) {
         InputStreamResponseListener listener = sendJsonRequestReturnResponseListener(null, httpMethod, baseUrl, path, headers);
+
         return getInoutStreamKlientResponse(listener, returnType);
     }
 
