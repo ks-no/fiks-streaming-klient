@@ -85,6 +85,72 @@ public class StreamingKlient {
         }
     }
 
+    public <T> KlientResponse<T> sendJsonRequest(Object body, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers, TypeReference<T> returnType) {
+        String jsonBody;
+        try {
+            jsonBody = objectMapper.writeValueAsString(body);
+        } catch (Exception e) {
+            throw new RuntimeException("Klarte ikke serialisere request body til JSON", e);
+        }
+
+        InputStreamResponseListener listener = new InputStreamResponseListener();
+        Request request = client.newRequest(baseUrl);
+        authenticationStrategy.setAuthenticationHeaders(request);
+        request.headers(requestHeaders -> {
+            if (headers != null) {
+                headers.forEach(header -> requestHeaders.put(header.name(), header.value()));
+            }
+        });
+        request
+                .method(httpMethod)
+                .path(path)
+                .body(new StringRequestContent("application/json", jsonBody, StandardCharsets.UTF_8))
+                .send(listener);
+
+        try {
+            final Response response = awaitResponse(listener);
+            int status = response.getStatus();
+            if (isError(status)) {
+                String errorContent = IOUtils.toString(listener.getInputStream(), StandardCharsets.UTF_8);
+                throw new KlientHttpException(String.format("HTTP-feil (%d): %s", status, errorContent), status, errorContent);
+            }
+            try (final InputStream input = listener.getInputStream()) {
+                return buildResponse(response, returnType != null ? objectMapper.readValue(input, returnType) : null);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Feil under lesing av datastrøm", e);
+        }
+    }
+
+    public <T> KlientResponse<T> sendPostWithoutBody(HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers, TypeReference<T> returnType) {
+        InputStreamResponseListener listener = new InputStreamResponseListener();
+        Request request = client.newRequest(baseUrl);
+        authenticationStrategy.setAuthenticationHeaders(request);
+        request.headers(requestHeaders -> {
+            if (headers != null) {
+                headers.forEach(header -> requestHeaders.put(header.name(), header.value()));
+            }
+        });
+        request
+                .method(httpMethod)
+                .path(path)
+                .send(listener);
+
+        try {
+            final Response response = awaitResponse(listener);
+            int status = response.getStatus();
+            if (isError(status)) {
+                String errorContent = IOUtils.toString(listener.getInputStream(), StandardCharsets.UTF_8);
+                throw new KlientHttpException(String.format("HTTP-feil (%d): %s", status, errorContent), status, errorContent);
+            }
+            try (final InputStream input = listener.getInputStream()) {
+                return buildResponse(response, returnType != null ? objectMapper.readValue(input, returnType) : null);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Feil under lesing av datastrøm", e);
+        }
+    }
+
     public KlientResponse<InputStream> sendJsonDownloadRequest(Object body, HttpMethod httpMethod, String baseUrl, String path, List<HttpHeader> headers) {
         String jsonBody;
         try {
@@ -97,7 +163,7 @@ public class StreamingKlient {
         Request request = client.newRequest(baseUrl);
         authenticationStrategy.setAuthenticationHeaders(request);
         request.headers(requestHeaders -> {
-            requestHeaders.put("Accept", "multipart/mixed");
+            requestHeaders.put("Accept", "*/*");
             if (headers != null) {
                 headers.forEach(header -> requestHeaders.put(header.name(), header.value()));
             }
